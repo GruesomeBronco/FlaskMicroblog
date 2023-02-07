@@ -1,12 +1,14 @@
 from datetime import datetime
-from flask import render_template, flash, redirect, url_for, request, g
+from flask import render_template, flash, redirect, url_for, request, g, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
 from flask_babel import lazy_gettext as _l, get_locale
+from langdetect import detect, LangDetectException
 from werkzeug.urls import url_parse 
 from langdetect import detect, LangDetectException
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, EditProfileForm, EmptyForm, PostForm
 from app.models import User, Post
+from app.translate import translate
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
@@ -18,7 +20,7 @@ def index():
             language = detect(form.post.data)
         except LangDetectException:
             language = ''
-        post = Post(body=form.post.data, author=current_user)
+        post = Post(body=form.post.data, author=current_user, language=language)
         db.session.add(post)
         db.session.commit()
         flash(_l('Your post is now live!'))
@@ -155,3 +157,9 @@ def unfollow(username):
     else:
         return redirect(url_for('index'))
 
+@app.route('/translate', methods=['POST'])
+@login_required
+def translate_text():
+    return jsonify({'text': translate(request.form['text'],
+                                      request.form['source_language'],
+                                      request.form['dest_language'])})

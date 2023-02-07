@@ -51,8 +51,6 @@ class User(UserMixin, db.Model):
     def is_following(self, user):
         return self.followed.filter(
             followers.c.followed_id == user.id).count() > 0
-            # почему здесь нельзя указать secondary?
-            # и зачем нам count???
 
     def followed_posts(self):
         followed = Post.query.join(
